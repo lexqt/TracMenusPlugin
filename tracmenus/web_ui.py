@@ -8,7 +8,7 @@ from trac.web.api import IRequestFilter
 from trac.web.chrome import add_script, add_stylesheet,ITemplateProvider
 from trac.config import ListOption
 from trac.util.html import html
-
+from trac.util.compat import sorted
 
 class MenuManagerModule(Component):
     implements(IRequestFilter, ITemplateProvider)
