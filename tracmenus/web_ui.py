@@ -84,7 +84,7 @@ class MenuManagerModule(Component):
             elif prop_name=='enabled':
                 value=self.config[menu_name].getbool(option, True)
             elif prop_name=='href':
-                menu[name]['label']=menu[name].setdefault('label', html.a())(href=value.startswith('/') and req.href(value) or value)
+                menu[name]['label']=menu[name].setdefault('label', html.a())(href=value.startswith('/') and req.href()+value or value)
             elif prop_name=='label':
                 menu[name].setdefault('label', html.a())(value)
                 continue
