@@ -9,6 +9,8 @@ from setuptools import setup
 setup(name="TracMenusPlugin",
       version="0.1",
       packages=['tracmenus'],
+      author="Catalin Balan", 
+      author_email="cbalan@optaros.com", 
       url="http://code.optaros.com/trac/oforge",
       description="Trac Menus",
       license="BSD",
