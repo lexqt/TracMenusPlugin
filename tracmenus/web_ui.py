@@ -3,6 +3,7 @@
 # Copyright 2008 Optaros, Inc.
 #
 import re
+from urlparse import urlsplit
 
 from trac.core import *
 from trac.web.api import IRequestFilter
@@ -74,7 +75,8 @@ class MenuManagerModule(Component):
             tree_node['label'] = html(tree_node.setdefault('label', html.a(name)))
             tree_node['visited'] = True 
             if tree_node.get('href'):
-                tree_node.setdefault('active', tree_node['href'].startswith(req.path_info))   
+                tree_node_href = urlsplit(tree_node['href'])
+                tree_node.setdefault('active', tree_node_href.path==req.path_info and tree_node_href.query in req.environ['QUERY_STRING'])   
 
             if '_tmp_children' in tree_node:
                 tree_node['children'] = html.ul()
