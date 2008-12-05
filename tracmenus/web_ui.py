@@ -2,6 +2,8 @@
 #
 # Copyright 2008 Optaros, Inc.
 #
+# @todo: Refactor this code in order to make it more easy to read! 
+
 import re
 from urlparse import urlsplit
 
@@ -36,8 +38,7 @@ class MenuManagerModule(Component):
             req.chrome['nav_orig']['ctxtnav']=[dict(name='ctxtnav_'+str(idx), label=ctx_label) 
                                                for idx, ctx_label in enumerate(req.chrome['ctxtnav'])]
         for menu_name in self.managed_menus:
-            req.chrome['nav'][menu_name] = list(self._get_menu(req, menu_name, 
-                                                               req.chrome['nav_orig']))    
+            req.chrome['nav'][menu_name] = self._get_menu(req, menu_name, req.chrome['nav_orig'])    
             if menu_name=='ctxtnav':
                 req.chrome['ctxtnav'] = [ ctxt_item.get('label') for ctxt_item in req.chrome['nav'][menu_name] ]
         
@@ -51,6 +52,8 @@ class MenuManagerModule(Component):
     def _get_menu(self, req, menu_name, nav_orig):
         config_menu, config_options = self._get_config_menus(req, menu_name)
         menu_orig = nav_orig.get(menu_name, [])
+        hide_if_no_children = []
+        menu_result = []
         
         if 'inherit' in config_options:
             menu_orig += nav_orig.get(config_options['inherit'], [])
@@ -72,11 +75,14 @@ class MenuManagerModule(Component):
                 del config_menu[name]['label']
             tree_node.update(config_menu.get(name, {'parent_name':'unassigned'}))
             
+            if tree_node.get('hide_if_no_children'):
+                hide_if_no_children.append(tree_node)
+            
             tree_node['label'] = html(tree_node.setdefault('label', html.a(name)))
             tree_node['visited'] = True 
             if tree_node.get('href'):
                 tree_node_href = urlsplit(tree_node['href'])
-                tree_node.setdefault('active', tree_node_href.path==req.path_info and tree_node_href.query in req.environ['QUERY_STRING'])   
+                tree_node.setdefault('active', tree_node_href[2]==req.path_info and tree_node_href[3] in req.environ['QUERY_STRING'])   
 
             if '_tmp_children' in tree_node:
                 tree_node['children'] = html.ul()
@@ -86,12 +92,13 @@ class MenuManagerModule(Component):
                         
             if (tree_node['parent_name']=='unassigned' and not 'unassigned' in config_menu) \
                     or tree_node['parent_name']=='top': 
-                yield tree_node
+                menu_result.append(tree_node)
                 continue
 
             tree_node['parent'] = tree_menu.setdefault(tree_node['parent_name'], {})
 
             child_node = html.li(class_=tree_node.get('active')==True and 'active' or None)
+            tree_node['outter_html'] = child_node 
             child_node.children=[tree_node['label']]
             if 'label' in tree_node['parent']:
                 if not 'children' in tree_node['parent']:
@@ -100,6 +107,16 @@ class MenuManagerModule(Component):
                 tree_node['parent']['children'].append(child_node)
             else:
                 tree_node['parent'].setdefault('_tmp_children',[]).append(child_node)
+        
+        for hide_node in hide_if_no_children:
+            if not hide_node.get('children'):
+                if hide_node['parent_name']=='top':
+                    pos = menu_result.index(hide_node)
+                    del menu_result[pos]
+                else:    
+                    pos = hide_node['parent']['children'].children.index(hide_node['outter_html'])
+                    del hide_node['parent']['children'].children[pos]
+        return menu_result
 
     def _get_config_menus(self, req, menu_name):
         new_menu_option=lambda name: dict(name=name, parent_name='top')
@@ -127,8 +144,12 @@ class MenuManagerModule(Component):
             elif prop_name=='hide_if_disabled':
                 menu[name][prop_name] = self.config[menu_name].getbool(option, False)
                 continue
+            elif prop_name=='hide_if_no_children':
+                menu[name][prop_name] = self.config[menu_name].getbool(option, False)
+                continue
             elif prop_name=='perm':
                 menu[name][prop_name] = self.config[menu_name].getlist(option, default=[], sep=',')
                 continue
             menu[name][prop_name]=value
         return menu, options
+
