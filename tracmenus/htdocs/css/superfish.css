@@ -64,6 +64,7 @@ ul.sf-menu li li li.sfHover ul {
     height:23px;
 	padding:0px;
 	border-width:0 0 1px 0;
+	background:#F1F1F1 none;
 }
 #mainnav *:link, #mainnav *:visited{
 	background:none;
