@@ -71,6 +71,12 @@ ul.sf-menu li li li.sfHover ul {
 	border:none;
 }
 
+.sf-menu li {
+        z-index:                99;
+        float:                  left;
+        position:               relative;
+}
+
 .sf-menu a, .sf-menu a:visited  { /* visited pseudo selector so IE6 applies text colour*/
 	color:			#13a;
 }
