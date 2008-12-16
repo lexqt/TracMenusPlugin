@@ -50,57 +50,22 @@ ul.sf-menu li li li.sfHover ul {
 	top:			0;
 }
 
-/*** DEMO SKIN ***/
-.sf-menu {
-	float:			left;
-	margin-bottom:	1em;
-}
-.sf-menu a {
-	padding: 		.75em 1em;
-	text-decoration:none;
-}
-
+/*** TRAC STYLE CSS ***/
 #mainnav {
-        height:18px;
-	padding:0px;
-	border-width:1px 0 1px 0;
-	background:#F1F1F1 none;
-
+  height: 16px;
+  padding-top: 0;
 }
-
-#mainnav li{
-	padding:0;
+.sf-menu {
+  float:                  left;
+  margin-bottom:  1em;
 }
-#mainnav *:link, #mainnav *:visited{
-	background:none;
-	border:none;
-}
-
 .sf-menu li {
-        z-index:                99;
-        float:                  left;
-        position:               relative;
-}
-
-.sf-menu a, .sf-menu a:visited  { /* visited pseudo selector so IE6 applies text colour*/
-	color:			#13a;
-}
-
-.sf-menu li {
-	background:		#F1F1F1;
-	white-space: normal;
-	text-align:center;
-}
-.sf-menu li li {
-	background:		#F2F2F2;
-}
-.sf-menu li li li {
-	background:		#F3F3F3;
-}
-.sf-menu li:hover, .sf-menu li.sfHover,
-.sf-menu a:focus, .sf-menu a:hover, .sf-menu a:active {
-	background:		#F0F0F0;
-	outline:		0;
+  background:             #f7f7f7;
+  white-space: normal;
+  padding: 0 !important;
+  border-bottom: 1px solid black;
+  border-right: 1px solid black !important;
+  text-align: left;
 }
 
 /*** arrows **/

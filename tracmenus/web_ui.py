@@ -47,7 +47,7 @@ class MenuManagerModule(Component):
             add_script(req, 'tracmenus/js/superfish.js')
             add_script(req, 'tracmenus/js/tracmenus.js')
             add_script(req, 'tracmenus/js/jquery.hoverIntent.minified.js')
-            add_stylesheet(req, 'tracmenus/css/superfish.css')
+            add_stylesheet(req, 'tracmenus/css/tracmenus.css')
         return template, data, content_type
         
     def _get_menu(self, req, menu_name, nav_orig):
