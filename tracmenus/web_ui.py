@@ -120,7 +120,7 @@ class MenuManagerModule(Component):
         return menu_result
 
     def _get_config_menus(self, req, menu_name):
-        new_menu_option=lambda name: dict(name=name, parent_name='top')
+        new_menu_option=lambda name: dict(name=name, href='#', parent_name='top')
         menu, options = {}, {}
         for option, value in self.config[menu_name].options():
             item_parts = option.split('.',1)
@@ -138,7 +138,7 @@ class MenuManagerModule(Component):
                 value = value.replace('$PATH_INFO', req.path_info)
                 menu[name]['label']=menu[name].setdefault('label', html.a())(href=value.startswith('/') and req.href()+value or value)
             elif prop_name=='label':
-                menu[name].setdefault('label', html.a())(value)
+                menu[name].setdefault('label', html.a(href='#'))(value)
                 continue
             elif prop_name=='path_info':
                 menu[name]['if_path_info'] = re.match(value, req.path_info) and True or False
