@@ -60,11 +60,11 @@ class MenuManagerModule(Component):
             menu_orig += nav_orig.get(config_options['inherit'], [])
             
         tree_menu={} 
-        for option in sorted(menu_orig+[{'name':key} for key in config_menu.keys() if config_menu[key].get('hide_if_disabled',False)==False], 
+        for option in sorted(menu_orig+[{'name':key} for key in config_menu.keys()], 
                              key=lambda x:int(config_menu.get(x['name'],{}).get('order',999))):            
             name = option['name']
             if 'visited' in tree_menu.get(name, []) \
-                    or config_menu.get(name, {}).get('enabled', True)==False \
+                    or (config_menu.get(name, {}).get('enabled', True)==False and not 'active' in option)\
                     or config_menu.get(name, {}).get('if_path_info', True)==False \
                     or False in [req.perm.has_permission(perm) for perm in config_menu.get(name, {}).get('perm', [])]:
                 continue
@@ -120,7 +120,7 @@ class MenuManagerModule(Component):
         return menu_result
 
     def _get_config_menus(self, req, menu_name):
-        new_menu_option=lambda name: dict(name=name, href='#', parent_name='top')
+        new_menu_option=lambda name: dict(name=name, href='#', enabled=False, parent_name='top')
         menu, options = {}, {}
         for option, value in self.config[menu_name].options():
             item_parts = option.split('.',1)
@@ -142,7 +142,7 @@ class MenuManagerModule(Component):
                 continue
             elif prop_name=='path_info':
                 menu[name]['if_path_info'] = re.match(value, req.path_info) and True or False
-            elif prop_name=='hide_if_disabled':
+            elif prop_name=='enabled':
                 menu[name][prop_name] = self.config[menu_name].getbool(option, False)
                 continue
             elif prop_name=='hide_if_no_children':
@@ -153,4 +153,3 @@ class MenuManagerModule(Component):
                 continue
             menu[name][prop_name]=value
         return menu, options
-
