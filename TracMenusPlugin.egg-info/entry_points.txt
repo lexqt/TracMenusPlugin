@@ -1,3 +1,0 @@
-[trac.plugins]
-tracmenus.web_ui = tracmenus.web_ui
-
