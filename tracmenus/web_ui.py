@@ -136,7 +136,7 @@ class MenuManagerModule(Component):
                 value=self.config[menu_name].getbool(option, True)
             elif prop_name=='href':
                 value = value.replace('$PATH_INFO', req.path_info)
-                menu[name]['label']=menu[name].setdefault('label', html.a())(href=value.startswith('/') and req.href().rstrip('/') and value or value)
+                menu[name]['label']=menu[name].setdefault('label', html.a())(href=req.href(value))
             elif prop_name=='label':
                 menu[name].setdefault('label', html.a(href='#'))(value)
                 continue
