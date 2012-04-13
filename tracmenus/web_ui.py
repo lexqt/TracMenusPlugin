@@ -2,7 +2,7 @@
 #
 # Copyright 2008 Optaros, Inc.
 #
-# @todo: Refactor this code in order to make it more easy to read! 
+# @todo: Refactor this code in order to make it more easy to read!
 
 import re
 from urlparse import urlsplit
@@ -17,7 +17,7 @@ from trac.util.compat import sorted
 class MenuManagerModule(Component):
     implements(IRequestFilter, ITemplateProvider)
 
-    managed_menus = ListOption('menu-custom', 'managed_menus', 'mainnav,metanav', 
+    managed_menus = ListOption('menu-custom', 'managed_menus', 'mainnav,metanav',
                         doc="""List of menus to be controlled by the Menu Manager""")
     serve_ui_files = BoolOption('menu-custom', 'serve_ui_files', True)
 
@@ -27,35 +27,35 @@ class MenuManagerModule(Component):
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('tracmenus',resource_filename(__name__, 'htdocs'))]
-   
+
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
     def post_process_request(self, req, template, data, content_type):
-        if 'nav_orig' in req.chrome: 
+        if 'nav_orig' in req.chrome:
             return template, data, content_type
         req.chrome['nav_orig'] = req.chrome['nav'].copy()
         if 'ctxtnav' in self.managed_menus and 'ctxtnav' in req.chrome:
-            req.chrome['nav_orig']['ctxtnav']=[dict(name='ctxtnav_'+str(idx), label=ctx_label) 
+            req.chrome['nav_orig']['ctxtnav']=[dict(name='ctxtnav_'+str(idx), label=ctx_label)
                                                for idx, ctx_label in enumerate(req.chrome['ctxtnav'])]
         for menu_name in self.managed_menus:
-            req.chrome['nav'][menu_name] = self._get_menu(req, menu_name, req.chrome['nav_orig'])    
+            req.chrome['nav'][menu_name] = self._get_menu(req, menu_name, req.chrome['nav_orig'])
             if menu_name=='ctxtnav':
                 req.chrome['ctxtnav'] = [ ctxt_item.get('label') for ctxt_item in req.chrome['nav'][menu_name] ]
-        
+
         if self.serve_ui_files:
             add_script(req, 'tracmenus/js/superfish.js')
             add_script(req, 'tracmenus/js/tracmenus.js')
             add_script(req, 'tracmenus/js/jquery.hoverIntent.minified.js')
             add_stylesheet(req, 'tracmenus/css/tracmenus.css')
         return template, data, content_type
-        
+
     def _get_menu(self, req, menu_name, nav_orig):
         config_menu, config_options = self._get_config_menus(req, menu_name)
         menu_orig = nav_orig.get(menu_name, [])
         hide_if_no_children = []
         menu_result = []
-        
+
         if 'inherit' in config_options:
             menu_orig += nav_orig.get(config_options['inherit'], [])
 
@@ -84,7 +84,7 @@ class MenuManagerModule(Component):
                     or ( item.get('hide_if_no_original', False) and not item.get('has_original') )\
                     or False in [req.perm.has_permission(perm) for perm in item.get('perm', [])]:
                 continue
-            
+
             tree_node = tree_menu.setdefault(name, {})
             tree_node.update(item.copy())
             tree_node.setdefault('parent_name', 'unassigned')
@@ -110,7 +110,7 @@ class MenuManagerModule(Component):
                 tree_node['label'].append(tree_node['children'])
                 tree_node['children'].children.extend(tree_node['_tmp_children'])
                 del tree_node['_tmp_children']
-                        
+
             if (tree_node['parent_name']=='unassigned' and not 'unassigned' in config_menu) \
                     or tree_node['parent_name']=='top':
                 if not active_top and tree_node.get('active'):
@@ -128,7 +128,7 @@ class MenuManagerModule(Component):
                 active_top     = tree_node['parent']
 
             child_node = html.li()
-            tree_node['outter_html'] = child_node 
+            tree_node['outter_html'] = child_node
             child_node.children=[tree_node['label']]
             if 'label' in tree_node['parent']:
                 if not 'children' in tree_node['parent']:
@@ -137,13 +137,13 @@ class MenuManagerModule(Component):
                 tree_node['parent']['children'].append(child_node)
             else:
                 tree_node['parent'].setdefault('_tmp_children',[]).append(child_node)
-        
+
         for hide_node in hide_if_no_children:
             if not hide_node.get('children'):
                 if hide_node['parent_name']=='top':
                     pos = menu_result.index(hide_node)
                     del menu_result[pos]
-                else:    
+                else:
                     pos = hide_node['parent']['children'].children.index(hide_node['outter_html'])
                     del hide_node['parent']['children'].children[pos]
 
@@ -165,7 +165,7 @@ class MenuManagerModule(Component):
             if name in ['inherit']:
                 options[name] = value
                 continue
-            menu.setdefault(name, new_menu_option(name)) 
+            menu.setdefault(name, new_menu_option(name))
             if prop_name=='parent':
                 menu[name]['parent_name']=value
                 continue
@@ -174,10 +174,8 @@ class MenuManagerModule(Component):
             elif prop_name=='href':
                 value = value.replace('$PATH_INFO', req.path_info)
                 value = value.startswith('/') and (req.href().rstrip('/') + value) or value
-#                menu[name]['label']=menu[name].setdefault('label', html.a())(href=href)
             elif prop_name=='label':
                 menu[name]['label_text'] = value
-#                menu[name].setdefault('label', html.a(href='#'))(value)
                 continue
             elif prop_name=='path_info':
                 menu[name]['if_path_info'] = re.match(value, req.path_info) and True or False
