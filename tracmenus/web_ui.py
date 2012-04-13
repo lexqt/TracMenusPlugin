@@ -58,32 +58,52 @@ class MenuManagerModule(Component):
         
         if 'inherit' in config_options:
             menu_orig += nav_orig.get(config_options['inherit'], [])
-            
-        tree_menu={} 
-        for option in sorted(menu_orig+[{'name':key} for key in config_menu.keys()], 
-                             key=lambda x:int(config_menu.get(x['name'],{}).get('order',999))):            
-            name = option['name']
-            if 'visited' in tree_menu.get(name, []) \
-                    or (config_menu.get(name, {}).get('enabled', True)==False and not 'active' in option)\
-                    or config_menu.get(name, {}).get('if_path_info', True)==False \
-                    or False in [req.perm.has_permission(perm) for perm in config_menu.get(name, {}).get('perm', [])]:
+
+        order = 900
+        menu_items = config_menu
+        for item in menu_orig:
+            order += 1
+            name = item['name']
+            item.update({
+                'has_original': True,
+                'order': order,
+            })
+            if name in menu_items:
+                # update original with configured
+                item.update(menu_items[name])
+            menu_items[name] = item
+
+        tree_menu={}
+        active_subitem = None
+        active_top = None
+        for name in sorted(menu_items.keys(),
+                           key=lambda n: int(menu_items[n].get('order', 999))):
+            item = menu_items[name]
+            if (item.get('enabled', True)==False and not 'active' in item)\
+                    or item.get('if_path_info', True)==False \
+                    or ( item.get('hide_if_no_original', False) and not item.get('has_original') )\
+                    or False in [req.perm.has_permission(perm) for perm in item.get('perm', [])]:
                 continue
             
             tree_node = tree_menu.setdefault(name, {})
-            tree_node.update(option.copy())
-            
-            if 'label' in option and 'label' in config_menu.get(name, []):
-                del config_menu[name]['label']
-            tree_node.update(config_menu.get(name, {'parent_name':'unassigned'}))
-            
+            tree_node.update(item.copy())
+            tree_node.setdefault('parent_name', 'unassigned')
+
             if tree_node.get('hide_if_no_children'):
                 hide_if_no_children.append(tree_node)
-            
-            tree_node['label'] = html(tree_node.setdefault('label', html.a(name)))
-            tree_node['visited'] = True 
+
             if tree_node.get('href'):
                 tree_node_href = urlsplit(tree_node['href'])
-                tree_node.setdefault('active', tree_node_href[2]==req.path_info and tree_node_href[3] in req.environ['QUERY_STRING'])   
+                tree_node.setdefault('active', tree_node_href[2]==req.path_info and tree_node_href[3] == req.environ['QUERY_STRING'])
+
+            if not tree_node.get('has_original'):
+                if tree_node.get('href'):
+                    label_href = tree_node['href']
+                else:
+                    label_href = '#'
+                label_text = tree_node.get('label_text', name)
+                tree_node['label'] = html.a(label_text, href=label_href)
+            tree_node['label'] = html(tree_node['label'])
 
             if '_tmp_children' in tree_node:
                 tree_node['children'] = html.ul()
@@ -92,13 +112,22 @@ class MenuManagerModule(Component):
                 del tree_node['_tmp_children']
                         
             if (tree_node['parent_name']=='unassigned' and not 'unassigned' in config_menu) \
-                    or tree_node['parent_name']=='top': 
+                    or tree_node['parent_name']=='top':
+                if not active_top and tree_node.get('active'):
+                    active_top = tree_node
+                else:
+                    tree_node['active'] = False
                 menu_result.append(tree_node)
                 continue
+            # else working with subitems
 
             tree_node['parent'] = tree_menu.setdefault(tree_node['parent_name'], {})
 
-            child_node = html.li(class_=tree_node.get('active')==True and 'active' or None)
+            if not active_subitem and tree_node.get('active'):
+                active_subitem = tree_node
+                active_top     = tree_node['parent']
+
+            child_node = html.li()
             tree_node['outter_html'] = child_node 
             child_node.children=[tree_node['label']]
             if 'label' in tree_node['parent']:
@@ -117,6 +146,14 @@ class MenuManagerModule(Component):
                 else:    
                     pos = hide_node['parent']['children'].children.index(hide_node['outter_html'])
                     del hide_node['parent']['children'].children[pos]
+
+        if active_top:
+            active_name = active_top['name']
+            for item in menu_result:
+                if item['name'] == active_name:
+                    item['active'] = True
+                    break
+
         return menu_result
 
     def _get_config_menus(self, req, menu_name):
@@ -136,10 +173,11 @@ class MenuManagerModule(Component):
                 value=self.config[menu_name].getbool(option, True)
             elif prop_name=='href':
                 value = value.replace('$PATH_INFO', req.path_info)
-                href = value.startswith('/') and (req.href().rstrip('/') + value) or value
-                menu[name]['label']=menu[name].setdefault('label', html.a())(href=href)
+                value = value.startswith('/') and (req.href().rstrip('/') + value) or value
+#                menu[name]['label']=menu[name].setdefault('label', html.a())(href=href)
             elif prop_name=='label':
-                menu[name].setdefault('label', html.a(href='#'))(value)
+                menu[name]['label_text'] = value
+#                menu[name].setdefault('label', html.a(href='#'))(value)
                 continue
             elif prop_name=='path_info':
                 menu[name]['if_path_info'] = re.match(value, req.path_info) and True or False
@@ -151,6 +189,9 @@ class MenuManagerModule(Component):
                 continue
             elif prop_name=='perm':
                 menu[name][prop_name] = self.config[menu_name].getlist(option, default=[], sep=',')
+                continue
+            elif prop_name=='hide_if_no_original':
+                menu[name][prop_name] = self.config[menu_name].getbool(option, False)
                 continue
             menu[name][prop_name]=value
         return menu, options

@@ -3,11 +3,16 @@
 #
 # Copyright 2007-2008 Optaros, Inc
 #
+# (c) Aleksey A. Porfirov, 2012
+# Minor refactoring/enhancement
+# Add 'hide_if_no_original' config prop
+# Fix active items
+
 
 from setuptools import setup
 
 setup(name="TracMenusPlugin",
-      version="0.1.1",
+      version="0.1.1a",
       packages=['tracmenus'],
       author="Catalin Balan", 
       author_email="cbalan@optaros.com", 
