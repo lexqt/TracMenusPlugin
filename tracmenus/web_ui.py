@@ -76,6 +76,7 @@ class MenuManagerModule(Component):
         tree_menu={}
         active_subitem = None
         active_top = None
+        href_path = req.href(req.path_info)
         for name in sorted(menu_items.keys(),
                            key=lambda n: int(menu_items[n].get('order', 999))):
             item = menu_items[name]
@@ -94,7 +95,9 @@ class MenuManagerModule(Component):
 
             if tree_node.get('href'):
                 tree_node_href = urlsplit(tree_node['href'])
-                tree_node.setdefault('active', tree_node_href[2]==req.path_info and tree_node_href[3] == req.environ['QUERY_STRING'])
+                tree_node.setdefault('active',
+                                     tree_node_href[2].rstrip('/') == href_path and \
+                                     tree_node_href[3] == req.query_string)
 
             if not tree_node.get('has_original'):
                 if tree_node.get('href'):
@@ -157,7 +160,7 @@ class MenuManagerModule(Component):
         return menu_result
 
     def _get_config_menus(self, req, menu_name):
-        new_menu_option=lambda name: dict(name=name, href='#', enabled=False, parent_name='top')
+        new_menu_option=lambda name: dict(name=name, href=None, enabled=False, parent_name='top')
         menu, options = {}, {}
         for option, value in self.config[menu_name].options():
             item_parts = option.split('.',1)
